@@ -93,8 +93,6 @@ def read_conll(fh, proj):
                 else:
                     print 'Non-projective sentence dropped'
             tokens = [root]
-            if tokens['root']!="RROOT":
-                print("ROOT not found. Invalid sentence")
         else:
             tokens.append(ConllEntry(int(tok[0]), tok[1], tok[3], tok[4], int(tok[6]), tok[7]))
     if len(tokens) > 1:

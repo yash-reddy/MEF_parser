@@ -1,0 +1,6 @@
+# Data and Results repo
+data/
+results/
+
+# pyc object files
+src/*.pyc
