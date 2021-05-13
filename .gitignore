@@ -4,3 +4,4 @@ results/
 
 # pyc object files
 src/*.pyc
+src/__pycache__

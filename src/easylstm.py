@@ -30,7 +30,7 @@ class EasyFirstLSTM:
 		self.oracle = options.oracle
 		self.layers = options.lstm_layers
 		self.wordsCount = words
-		self.vocab = {word: ind+3 for word, ind in w2i.iteritems()}
+		self.vocab = {word: ind+3 for word, ind in w2i.items()}
 		self.pos = [{word: ind+3 for ind, word in enumerate(pos1)},{word: ind+3 for ind, word in enumerate(pos2)}]
 		self.pos1 = {word: ind+3 for ind, word in enumerate(pos1)}
 		self.pos2 = {word: ind+3 for ind, word in enumerate(pos2)}
@@ -49,7 +49,7 @@ class EasyFirstLSTM:
 			self.external_embedding = {line.split(' ')[0] : [float(f) for f in line.strip().split(' ')[1:]] for line in external_embedding_fp}
 			external_embedding_fp.close()
 			self.edim = len(self.external_embedding.values()[0])
-			self.noextrn = [0.0 for _ in xrange(self.edim)]
+			self.noextrn = [0.0 for _ in range(self.edim)]
 			self.extrnd = {word: i + 3 for i, word in enumerate(self.external_embedding)}
 			self.elookup=self.model.add_lookup_parameters("extrn-lookup", (len(self.external_embedding) + 3, self.edim))
 			for word, i in self.extrnd.iteritems():
@@ -57,7 +57,7 @@ class EasyFirstLSTM:
 			self.extrnd['*PAD*'] = 1
 			self.extrnd['*INITIAL*'] = 2
 
-			print 'Load external embedding. Vector dimensions', self.edim
+			print('Load external embedding. Vector dimensions', self.edim)
 
 		self.vocab['*PAD*'] = 1
 		self.pos[0]['*PAD*'] = 1
@@ -180,39 +180,35 @@ class EasyFirstLSTM:
 
 
 	def  __getExpr(self, forest, support_forest, i, train, tree_dim,indexing_lists):
-                roots = [forest.roots[idx] for idx in indexing_lists[tree_dim]]
+		roots = [forest.roots[idx] for idx in indexing_lists[tree_dim]]
 		support_roots = [support_forest.roots[idx] for idx in indexing_lists[tree_dim]]
 		nRoots = len(roots)
 
 		if self.builders is None:
-			input = concatenate([ concatenate(roots[j].lstms) if j>=0 and j<nRoots else self.empty[tree_dim] for j in xrange(i-self.k, i+self.k+2) ])
+			input = concatenate([ concatenate(roots[j].lstms) if j>=0 and j<nRoots else self.empty[tree_dim] for j in range(i-self.k, i+self.k+2) ])
 		else:
 			if self.rep_mode==0:
 				input = concatenate([concatenate([roots[j].lstms[0].output(), roots[j].lstms[1].output()])
-						if j >= 0 and j < nRoots else self.empty[tree_dim] for j in xrange(i - self.k, i + self.k + 2)])
+						if j >= 0 and j < nRoots else self.empty[tree_dim] for j in range(i - self.k, i + self.k + 2)])
 			elif self.rep_mode==1:
 				filler = concatenate([self.empty[tree_dim], self.empty[1 - tree_dim]])
 				input = concatenate([concatenate([roots[j].lstms[0].output(), roots[j].lstms[1].output(), support_roots[j].lstms[0].output(),
-								  support_roots[j].lstms[1].output()]) if j >= 0 and j < nRoots else filler for j in xrange(i - self.k, i + self.k + 2)])
+								  support_roots[j].lstms[1].output()]) if j >= 0 and j < nRoots else filler for j in range(i - self.k, i + self.k + 2)])
 			elif self.rep_mode==2:
-				print(nRoots,i,self.k,)
-                                temp=lookup(self.rlookup[tree_dim],len(self.irels[tree_dim])+1)
-                                temp=lookup(self.rlookup[1-tree_dim],len(self.irels[1-tree_dim])+1)
-                                temp=lookup(self.rlookup[tree_dim],len(self.irels[tree_dim]))
-                                temp=lookup(self.rlookup[1-tree_dim],len(self.irels[1-tree_dim]))
-                                for lol in range(i-self.k,i+self.k+2):
-                                    if 0<=lol<nRoots:
-                                        print(roots[lol].pred_irel,support_roots[lol].pred_irel)
+				print(nRoots,i,self.k)
+				for lol in range(i-self.k,i+self.k+2):
+					if 0<=lol<nRoots:
+						print(roots[lol].pred_irel,support_roots[lol].pred_irel)
 
-                                filler = concatenate([self.empty[tree_dim], lookup(self.rlookup[tree_dim], len(self.irels[tree_dim]) + 1),
-									  self.empty[1 - tree_dim],
-									  lookup(self.rlookup[1 - tree_dim], len(self.irels[1 - tree_dim]) + 1)])
+				filler = concatenate([self.empty[tree_dim], lookup(self.rlookup[tree_dim], len(self.irels[tree_dim]) + 1),
+						self.empty[1 - tree_dim],
+						lookup(self.rlookup[1 - tree_dim], len(self.irels[1 - tree_dim]) + 1)])
 				input = concatenate([concatenate([roots[j].lstms[0].output(), roots[j].lstms[1].output(),lookup(self.rlookup[tree_dim],
 						len(self.irels[tree_dim])) if roots[j].pred_irel == None else lookup(self.rlookup[tree_dim], roots[j].pred_irel),
 						support_roots[j].lstms[0].output(), support_roots[j].lstms[1].output(),
 						lookup(self.rlookup[1 - tree_dim], len(self.irels[1 - tree_dim])) if
 						support_roots[j].pred_irel == None else lookup(self.rlookup[1 - tree_dim],support_roots[j].pred_irel)])
-						if j >= 0 and j < nRoots else filler for j in xrange(i - self.k, i + self.k + 2)])
+						if j >= 0 and j < nRoots else filler for j in range(i - self.k, i + self.k + 2)])
 
 		if self.hidden2_units > 0:
 			routput = (self.routLayer[tree_dim] * self.activation(self.rhid2Bias[tree_dim] + self.rhid2Layer[tree_dim] * self.activation(self.rhidLayer[tree_dim] * input + self.rhidBias[tree_dim])) + self.routBias[tree_dim])
@@ -237,13 +233,13 @@ class EasyFirstLSTM:
 	def __evaluate(self, forest, support_forest, train,tree_dim,indexing_lists):
 		nRoots = len(indexing_lists[tree_dim])
 		nRels = len(self.irels[tree_dim])
-		for i in xrange(nRoots - 1):
+		for i in range(nRoots - 1):
 			if forest.roots[indexing_lists[tree_dim][i]].scores is None:
 				output, uoutput = self.__getExpr(forest,support_forest, i, train,tree_dim,indexing_lists)
 				scrs = output.value()
 				uscrs = uoutput.value()
-				forest.roots[indexing_lists[tree_dim][i]].exprs = [(pick(output, j * 2) + pick(uoutput, 0), pick(output, j * 2 + 1) + pick(uoutput, 1)) for j in xrange(len(self.irels[tree_dim]))]
-				forest.roots[indexing_lists[tree_dim][i]].scores = [(scrs[j * 2] + uscrs[0], scrs[j * 2 + 1] + uscrs[1]) for j in xrange(len(self.irels[tree_dim]))]
+				forest.roots[indexing_lists[tree_dim][i]].exprs = [(pick(output, j * 2) + pick(uoutput, 0), pick(output, j * 2 + 1) + pick(uoutput, 1)) for j in range(len(self.irels[tree_dim]))]
+				forest.roots[indexing_lists[tree_dim][i]].scores = [(scrs[j * 2] + uscrs[0], scrs[j * 2 + 1] + uscrs[1]) for j in range(len(self.irels[tree_dim]))]
 
 	def getParams(self):
 		p=[]
@@ -271,22 +267,22 @@ class EasyFirstLSTM:
 			if self.embed_mode==0:
 				paddingWordVec_0 = self.wlookup[0][1]
 				paddingWordVec_1 = self.wlookup[1][1]
-				paddingVec_0 = tanh(self.word2lstm[0] * concatenate(filter(None, [paddingWordVec_0, paddingPosVec_0, evec])) + self.word2lstmbias[0] )
-				paddingVec_1 = tanh(self.word2lstm[1] * concatenate(filter(None, [paddingWordVec_1, paddingPosVec_1, evec])) + self.word2lstmbias[1] )
+				paddingVec_0 = tanh(self.word2lstm[0] * concatenate(list(filter(None, [paddingWordVec_0, paddingPosVec_0, evec]))) + self.word2lstmbias[0] )
+				paddingVec_1 = tanh(self.word2lstm[1] * concatenate(list(filter(None, [paddingWordVec_1, paddingPosVec_1, evec]))) + self.word2lstmbias[1] )
 			elif self.embed_mode==1:
 				paddingWordVec = self.wlookup[1]
-				paddingVec_0 = tanh(self.word2lstm[0] * concatenate(filter(None, [paddingWordVec, paddingPosVec_0, evec])) + self.word2lstmbias[0])
-				paddingVec_1 = tanh(self.word2lstm[1] * concatenate(filter(None, [paddingWordVec, paddingPosVec_1, evec])) + self.word2lstmbias[1])
+				paddingVec_0 = tanh(self.word2lstm[0] * concatenate(list(filter(None, [paddingWordVec, paddingPosVec_0, evec]))) + self.word2lstmbias[0])
+				paddingVec_1 = tanh(self.word2lstm[1] * concatenate(list(filter(None, [paddingWordVec, paddingPosVec_1, evec]))) + self.word2lstmbias[1])
 		else:
 			if self.embed_mode==3:
 				paddingWordVec_0 = self.wlookup[0][1]
 				paddingWordVec_1 = self.wlookup[1][1]
-				paddingVec_0 = tanh(self.word2lstm[0] * concatenate(filter(None, [paddingWordVec_0, paddingPosVec_0,paddingPosVec_1, evec])) + self.word2lstmbias[0] )
-				paddingVec_1 = tanh(self.word2lstm[1] * concatenate(filter(None, [paddingWordVec_1, paddingPosVec_1,paddingPosVec_0, evec])) + self.word2lstmbias[1] )
+				paddingVec_0 = tanh(self.word2lstm[0] * concatenate(list(filter(None, [paddingWordVec_0, paddingPosVec_0,paddingPosVec_1, evec]))) + self.word2lstmbias[0] )
+				paddingVec_1 = tanh(self.word2lstm[1] * concatenate(list(filter(None, [paddingWordVec_1, paddingPosVec_1,paddingPosVec_0, evec]))) + self.word2lstmbias[1] )
 			elif self.embed_mode==4:
 				paddingWordVec = self.wlookup[1]
-				paddingVec_0 = tanh(self.word2lstm[0] * concatenate(filter(None, [paddingWordVec, paddingPosVec_0,paddingPosVec_1, evec])) + self.word2lstmbias[0])
-				paddingVec_1 = tanh(self.word2lstm[1] * concatenate(filter(None, [paddingWordVec, paddingPosVec_1,paddingPosVec_0, evec])) + self.word2lstmbias[1])
+				paddingVec_0 = tanh(self.word2lstm[0] * concatenate(list(filter(None, [paddingWordVec, paddingPosVec_0,paddingPosVec_1, evec]))) + self.word2lstmbias[0])
+				paddingVec_1 = tanh(self.word2lstm[1] * concatenate(list(filter(None, [paddingWordVec, paddingPosVec_1,paddingPosVec_0, evec]))) + self.word2lstmbias[1])
 
 		self.empty = [(concatenate([self.builders[0][0].initial_state().add_input(paddingVec_0).output(), self.builders[0][1].initial_state().add_input(paddingVec_0).output()])),
 				  (concatenate([self.builders[1][0].initial_state().add_input(paddingVec_1).output(), self.builders[1][1].initial_state().add_input(paddingVec_1).output()]))]
@@ -307,9 +303,9 @@ class EasyFirstLSTM:
 
 			root.evec = None # external embedding
 			if self.embed_mode//2==0:
-				root.ivec = (self.word2lstm[tree_dim] * concatenate(filter(None, [root.wordvec, root.posvec, root.evec]))) + self.word2lstmbias[tree_dim]
+				root.ivec = (self.word2lstm[tree_dim] * concatenate(list(filter(None, [root.wordvec, root.posvec, root.evec])))) + self.word2lstmbias[tree_dim]
 			else:
-				root.ivec = (self.word2lstm[tree_dim] * concatenate(filter(None, [root.wordvec, root.posvec,support_root.posvec, root.evec]))) + self.word2lstmbias[tree_dim]
+				root.ivec = (self.word2lstm[tree_dim] * concatenate(list(filter(None, [root.wordvec, root.posvec,support_root.posvec, root.evec])))) + self.word2lstmbias[tree_dim]
 		if self.blstmFlag:
 			if self.blstm_mode==0:
 				forward  = self.surfaceBuilders[tree_dim][0].initial_state()
@@ -379,19 +375,12 @@ class EasyFirstLSTM:
 
 		rootsIds = set([root.id for root in roots])
 
-		for i in xrange(len(indexing_list) - 1):
+		for i in range(len(indexing_list) - 1):
 			for irel, rel in enumerate(self.irels[tree_dim]):
-				for op in xrange(2):
+				for op in range(2):
 					child = i + (1 - op)
 					parent = i + op
 
-					# oracleCost = unassigned[roots[child].id] + (
-					#	0 if roots[child].parent_id not in rootsIds or roots[child].parent_id == roots[
-					#		parent].id else 1)
-
-					# print (i,irel,op)
-					# print(roots[i].scores[irel][op])
-					# if oracleCost == 0 and (roots[child].parent_id != roots[parent].id or roots[child].relation == rel):
 					if True:
 						if bestValidScore < roots[i].scores[irel][op]:
 							bestValidScore = roots[i].scores[irel][op]
@@ -400,6 +389,7 @@ class EasyFirstLSTM:
 							bestValidIndex = i
 							bestValidIRel, bestValidRel = irel, rel
 							bestValidExpr = roots[bestValidIndex].exprs[bestValidIRel][bestValidOp]
+
 		# Parent, child and index are the indices w.r.t the indexing_list, i.e roots[indexing_list[parent/child/index]] points to the correct parent/child/index in the retained forest.
 		bestValidpack = [bestValidScore, bestValidExpr, bestValidOp, bestValidParent, bestValidChild, bestValidIndex,
 						 bestValidIRel, bestValidRel]
@@ -424,9 +414,9 @@ class EasyFirstLSTM:
 
 		rootsIds = set([root.id for root in roots])
 
-		for i in xrange(len(indexing_list) - 1):
+		for i in range(len(indexing_list) - 1):
 			for irel, rel in enumerate(self.irels[tree_dim]):
-				for op in xrange(2):
+				for op in range(2):
 					child = i + (1 - op)
 					parent = i + op
 
@@ -461,7 +451,7 @@ class EasyFirstLSTM:
 	def Predict(self, conll_path1, conll_path2):
 		conllFP1 = open(conll_path1, 'r')
 		conllFP2 = open(conll_path2, 'r')
-		data = list(zip(list(read_conll(conllFP1, False)), lis+t(read_conll(conllFP2, False))))
+		data = list(zip(list(read_conll(conllFP1, False)), list(read_conll(conllFP2, False))))
 
 		for iSentence, sentences in enumerate(data):
 			self.Init()
@@ -475,12 +465,12 @@ class EasyFirstLSTM:
 			self.getWordEmbeddings(forests[0],forests[1], False, 0)
 			self.getWordEmbeddings(forests[1],forests[0], False, 1)
 
-			for c1 in xrange(2):
+			for c1 in range(2):
 				for root in forests[c1].roots:
 					root.lstms = [self.builders[c1][0].initial_state().add_input(root.vec),
 								  self.builders[c1][1].initial_state().add_input(root.vec)]
 
-			indexing_lists = [[i for i in xrange(len(forests[0].roots))], [i for i in xrange(len(forests[1].roots))]]
+			indexing_lists = [[i for i in range(len(forests[0].roots))], [i for i in range(len(forests[1].roots))]]
 
 			while (len(indexing_lists[0]) > 1) or (len(indexing_lists[1]) > 1):
 				self.__evaluate(forests[0], forests[1], False, 0, indexing_lists)
@@ -499,14 +489,14 @@ class EasyFirstLSTM:
 
 				roots = [forests[selectedDim].roots[idx] for idx in indexing_lists[selectedDim]]
 
-				for j in xrange(max(0, selectedIndex - self.k - 1),
+				for j in range(max(0, selectedIndex - self.k - 1),
 								min(len(indexing_lists[selectedDim]), selectedIndex + self.k + 2)):
 					roots[j].scores = None
 
 				roots[selectedChild].pred_parent_id = roots[selectedParent].id
 				roots[selectedChild].pred_relation = selectedRel
 				if (selectedRel == None):
-					print(scorepack[selectedDim][0])
+					print(score_pack[selectedDim][0])
 				roots[selectedParent].lstms[selectedOp] = roots[selectedParent].lstms[selectedOp].add_input(
 					self.activation(self.lstm2lstm[selectedDim] *
 									noise(concatenate(
@@ -549,8 +539,8 @@ class EasyFirstLSTM:
 		self.Init()
 		for iSentence, sentences in enumerate(shuffledData):
 			if iSentence % 100 == 0 and iSentence != 0:
-				print "model_"+str(self.embed_mode)+str(self.blstm_mode)+str(self.rep_mode)+str(self.ul_mode)+"  "+'Processing sentence number:', iSentence, 'Loss:', eloss / etotal, 'Errors:', (
-					float(eerrors)) / etotal, 'Labeled Errors:', (float(lerrors) / etotal), 'Time', time.time() - start
+				print("model_"+str(self.embed_mode)+str(self.blstm_mode)+str(self.rep_mode)+str(self.ul_mode)+"  "+'Processing sentence number:', iSentence, 'Loss:', eloss / etotal, 'Errors:', (
+					float(eerrors)) / etotal, 'Labeled Errors:', (float(lerrors) / etotal), 'Time', time.time() - start)
 				start = time.time()
 				eerrors = 0
 				eloss = 0.0
@@ -567,7 +557,7 @@ class EasyFirstLSTM:
 			self.getWordEmbeddings(forests[0],forests[1], True, 0)
 			self.getWordEmbeddings(forests[1],forests[0], True, 1)
 
-			for c1 in xrange(2):
+			for c1 in range(2):
 				for root in forests[c1].roots:
 					root.lstms = [self.builders[c1][0].initial_state().add_input(root.vec),
 								  self.builders[c1][1].initial_state().add_input(root.vec)]
@@ -576,7 +566,7 @@ class EasyFirstLSTM:
 				{entry.id: sum([1 for pentry in sentence_0 if pentry.parent_id == entry.id]) for entry in sentence_0},
 				{entry.id: sum([1 for pentry in sentence_1 if pentry.parent_id == entry.id]) for entry in sentence_1}]
 
-			indexing_lists = [[i for i in xrange(len(forests[0].roots))], [i for i in xrange(len(forests[1].roots))]]
+			indexing_lists = [[i for i in range(len(forests[0].roots))], [i for i in range(len(forests[1].roots))]]
 
 			if self.parse_mode==0:
 				parity_bit=self.priority_dim
@@ -677,7 +667,7 @@ class EasyFirstLSTM:
 
 				etotal += 1
 
-				for j in xrange(max(0, selectedIndex - self.k - 1),
+				for j in range(max(0, selectedIndex - self.k - 1),
 								min(len(indexing_lists[selectedDim]), selectedIndex + self.k + 2)):
 					roots[j].scores = None
 
@@ -719,4 +709,4 @@ class EasyFirstLSTM:
 			renew_cg()
 
 		# self.trainer.update_epoch()
-		print "Loss: ", mloss / iSentence
+		print("Loss: ", mloss / iSentence)

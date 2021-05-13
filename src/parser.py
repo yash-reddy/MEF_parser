@@ -40,24 +40,24 @@ if __name__ == '__main__':
 
     (options, args) = parser.parse_args()
 
-    print 'Using external embedding:', options.external_embedding
+    print('Using external embedding:', options.external_embedding)
 
     if options.devgenFlag:
-        print 'Preparing vocab'
+        print('Preparing vocab')
         words, w2i, pos1, rels1 = utils.vocab(options.conll_train1)
         _1, _2, pos2, rels2 = utils.vocab(options.conll_train2)
-        for epoch in xrange(options.start_epoch,options.epochs):
+        for epoch in range(options.start_epoch,options.epochs):
             model_params = os.path.join(options.output, "easyfirst.model" + str(epoch + 1))
             if not os.path.exists(model_params):
                 print(model_params + " doesn't exist, exiting process")
                 break
-            print "Generating dev predictions for epoch : "+str(epoch+1)
+            print("Generating dev predictions for epoch : "+str(epoch+1))
             print(options.params)
             params=os.path.join(options.output,options.params)
             #with open(params, 'r') as paramsfp:
             #    words, w2i, pos1, pos2, rels1, rels2, stored_opt = pickle.load(paramsfp)
 
-            print 'Initializing Hierarchical Tree LSTM parser:'
+            print('Initializing Hierarchical Tree LSTM parser:')
             parser = easylstm.EasyFirstLSTM(words, pos1, pos2, rels1, rels2, w2i, options)
             parser.Load(model_params)
             dev_path1,dev_path2= options.conll_dev1,options.conll_dev2
@@ -66,12 +66,12 @@ if __name__ == '__main__':
             utils.get_results(parser,dev_path1,dev_path2,write_path1,write_path2,dim_tracker_path)
 
     elif options.predictFlag:
-        with open(options.params, 'r') as paramsfp:
+        with open(options.params, 'rb') as paramsfp:
             words, w2i, pos1, pos2, rels1, rels2, stored_opt = pickle.load(paramsfp)
 
         stored_opt.external_embedding = options.external_embedding
 
-        print 'Initializing Hierarchical Tree LSTM parser:'
+        print('Initializing Hierarchical Tree LSTM parser:')
         parser = easylstm.EasyFirstLSTM(words, pos1, pos2, rels1,rels2, w2i, stored_opt)
 
         parser.Load(options.loadmodel)
@@ -80,7 +80,7 @@ if __name__ == '__main__':
         ts = time.time()
         test_res = list(parser.Predict(options.conll_test1,0))
         te = time.time()
-        print 'Finished predicting test_0.', te - ts, 'seconds.'
+        print('Finished predicting test_0.', te - ts, 'seconds.')
         utils.write_conll(tespath, test_res)
 
 
@@ -89,23 +89,26 @@ if __name__ == '__main__':
         ts = time.time()
         test_res = list(parser.Predict(options.conll_test2,1))
         te = time.time()
-        print 'Finished predicting test_1.', te - ts, 'seconds.'
+        print('Finished predicting test_1.', te - ts, 'seconds.')
         utils.write_conll(tespath, test_res)
 
     else:
-        print 'Preparing vocab'
+        print('Preparing vocab')
         words, w2i, pos1, rels1 = utils.vocab(options.conll_train1)
         _1, _2, pos2, rels2 = utils.vocab(options.conll_train2)
 
-        with open(os.path.join(options.output, options.params), 'w') as paramsfp:
-            pickle.dump((words, w2i, pos1, pos2, rels1, rels2, options), paramsfp)
-        print 'Finished collecting vocab'
+        for obj in [words, w2i, tuple(pos1), tuple(pos2), tuple(rels1), tuple(rels2), options]:
+            print(type(obj))
 
-        print 'Initializing Hierarchical Tree LSTM parser:'
+        with open(os.path.join(options.output, options.params), 'wb') as paramsfp:
+            pickle.dump((words, w2i, tuple(pos1), tuple(pos2), tuple(rels1), tuple(rels2), options), paramsfp)
+        print('Finished collecting vocab')
+
+        print('Initializing Hierarchical Tree LSTM parser:')
         parser = easylstm.EasyFirstLSTM(words, pos1, pos2, rels1, rels2, w2i, options)
 
-        for epoch in xrange(options.epochs):
-            print 'Starting epoch', epoch
+        for epoch in range(options.epochs):
+            print('Starting epoch', epoch)
             parser.Train(options.conll_train1,options.conll_train2)
             #devpath = os.path.join(options.output, 'dev_0_epoch_' + str(epoch+1) + '.conll')
             #utils.write_conll(devpath, parser.Predict(options.conll_dev1,0))

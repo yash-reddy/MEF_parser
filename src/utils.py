@@ -39,8 +39,8 @@ def isProj(sentence):
     forest = ParseForest(sentence)
     unassigned = {entry.id: sum([1 for pentry in sentence if pentry.parent_id == entry.id]) for entry in sentence}
 
-    for _ in xrange(len(sentence)):
-        for i in xrange(len(forest.roots) - 1):
+    for _ in range(len(sentence)):
+        for i in range(len(forest.roots) - 1):
             if forest.roots[i].parent_id == forest.roots[i+1].id and unassigned[forest.roots[i].id] == 0:
                 unassigned[forest.roots[i+1].id]-=1
                 forest.Attach(i+1, i)
@@ -52,7 +52,7 @@ def isProj(sentence):
 
     return len(forest.roots) == 1
 
-def vocab_catibex(filepath):
+def vocab_catibex(conll_path):
     words=list()
     for i in range(20):
         words.append(i)
@@ -91,7 +91,7 @@ def read_conll(fh, proj):
                 if not proj or isProj(tokens):
                     yield tokens
                 else:
-                    print 'Non-projective sentence dropped'
+                    print('Non-projective sentence dropped')
             tokens = [root]
         else:
             tokens.append(ConllEntry(int(tok[0]), tok[1], tok[3], tok[4], int(tok[6]), tok[7]))
